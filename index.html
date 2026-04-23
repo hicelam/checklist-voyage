@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Checklist Voyage Firebase Sync</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --text-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+      --text-sm: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+      --text-base: clamp(1rem, 0.95rem + 0.25vw, 1.125rem);
+      --text-lg: clamp(1.125rem, 1rem + 0.75vw, 1.5rem);
+      --text-xl: clamp(1.5rem, 1.2rem + 1.25vw, 2.25rem);
+      --text-2xl: clamp(2rem, 1.2rem + 2.5vw, 3.5rem);
+      --space-3: .75rem; --space-4: 1rem; --space-5: 1.25rem; --space-6: 1.5rem; --space-8: 2rem; --space-12: 3rem; --space-16: 4rem;
+      --radius-lg: 1.25rem; --radius-xl: 1.75rem; --radius-full: 999px;
+      --font-body: 'Instrument Sans', system-ui, sans-serif;
+      --font-display: 'Playfair Display', Georgia, serif;
+    }
+    :root, [data-theme="light"] {
+      --color-bg: #f7f0e8;
+      --color-surface: rgba(255,255,255,.82);
+      --color-surface-2: rgba(255,255,255,.96);
+      --color-border: rgba(72,54,40,.12);
+      --color-text: #241913;
+      --color-text-muted: #6f6257;
+      --color-primary: #0f766e;
+      --color-primary-soft: #def7f2;
+      --color-coral: #ee7b52;
+      --color-gold: #f1c95d;
+      --color-lavender-soft: #ece8ff;
+      --shadow: 0 22px 60px rgba(80,57,33,.10);
+    }
+    [data-theme="dark"] {
+      --color-bg: #171311;
+      --color-surface: rgba(33,27,24,.82);
+      --color-surface-2: rgba(43,37,34,.96);
+      --color-border: rgba(255,255,255,.08);
+      --color-text: #f4ede7;
+      --color-text-muted: #c9bbb0;
+      --color-primary: #88dfd2;
+      --color-primary-soft: rgba(136,223,210,.14);
+      --color-coral: #ffb08d;
+      --color-gold: #f8d97c;
+      --color-lavender-soft: rgba(184,170,255,.14);
+      --shadow: 0 22px 60px rgba(0,0,0,.33);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: var(--font-body);
+      color: var(--color-text);
+      background:
+        radial-gradient(circle at top left, rgba(241,201,93,.22), transparent 26%),
+        radial-gradient(circle at top right, rgba(15,118,110,.18), transparent 28%),
+        linear-gradient(180deg, var(--color-bg), color-mix(in srgb, var(--color-bg) 88%, white 12%));
+    }
+    .app { width: min(1240px, calc(100% - 28px)); margin: 0 auto; padding: var(--space-8) 0 var(--space-16); }
+    .hero { display: grid; grid-template-columns: 1.15fr .85fr; gap: var(--space-6); margin-bottom: var(--space-8); }
+    .panel { background: var(--color-surface); backdrop-filter: blur(16px); border: 1px solid var(--color-border); border-radius: var(--radius-xl); box-shadow: var(--shadow); }
+    .hero-main { padding: var(--space-8); }
+    .hero-side { padding: var(--space-6); display: grid; gap: var(--space-4); align-content: start; }
+    .pill { display:inline-flex; gap:.5rem; align-items:center; padding:.5rem .85rem; border-radius:var(--radius-full); background:var(--color-primary-soft); color:var(--color-primary); font-size:var(--text-sm); font-weight:700; margin-bottom:var(--space-4); }
+    h1 { margin:0 0 var(--space-3); font-family:var(--font-display); font-size:var(--text-2xl); line-height:1.03; }
+    .lead, .muted { color: var(--color-text-muted); }
+    .lead { max-width: 62ch; }
+    .actions, .config-grid { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:var(--space-6); }
+    .config-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+    .config-grid input { width:100%; }
+    button, input, textarea { font: inherit; }
+    button { border:0; cursor:pointer; border-radius:var(--radius-full); padding:.9rem 1.15rem; font-size:var(--text-sm); font-weight:700; transition:.18s ease; }
+    button:hover { transform:translateY(-1px); }
+    .btn-primary { background: var(--color-text); color:white; }
+    .btn-secondary { background: var(--color-surface-2); color:var(--color-text); border:1px solid var(--color-border); }
+    .btn-accent { background: var(--color-primary); color: white; }
+    .field, .progress-card, .mini-card { border-radius: var(--radius-lg); background: var(--color-surface-2); border:1px solid var(--color-border); }
+    .field { padding: var(--space-4); }
+    .field label { display:block; font-size:var(--text-xs); font-weight:800; text-transform:uppercase; letter-spacing:.08em; margin-bottom:.45rem; color:var(--color-text-muted); }
+    .field input, .field textarea { width:100%; border:1px solid var(--color-border); border-radius:1rem; padding:.85rem 1rem; background:transparent; color:var(--color-text); }
+    .field textarea { min-height: 90px; resize: vertical; }
+    .progress-card, .mini-card { padding: var(--space-5); }
+    .bar { height:12px; width:100%; border-radius:var(--radius-full); background:rgba(128,128,128,.16); overflow:hidden; margin-top:.8rem; }
+    .bar span { display:block; height:100%; width:0; border-radius:inherit; background:linear-gradient(90deg, var(--color-primary), var(--color-coral), var(--color-gold)); transition:width .3s ease; }
+    .mini-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--space-4); }
+    .mini-card .k { font-size:var(--text-xs); text-transform:uppercase; letter-spacing:.08em; color:var(--color-text-muted); }
+    .mini-card .v { font-size:var(--text-lg); font-weight:800; margin-top:.3rem; }
+    .sections { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:var(--space-5); margin-top: var(--space-8); }
+    .section { padding: var(--space-5); }
+    .section[data-tone="teal"] { background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 92%, var(--color-primary-soft) 8%), var(--color-surface-2)); }
+    .section[data-tone="coral"] { background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 92%, rgba(238,123,82,.10) 8%), var(--color-surface-2)); }
+    .section[data-tone="gold"] { background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 92%, rgba(241,201,93,.12) 8%), var(--color-surface-2)); }
+    .section[data-tone="lavender"] { background: linear-gradient(180deg, color-mix(in srgb, var(--color-surface) 92%, var(--color-lavender-soft) 8%), var(--color-surface-2)); }
+    .section-head { display:flex; justify-content:space-between; gap:var(--space-3); margin-bottom:var(--space-4); align-items:flex-start; }
+    .section-head h2 { margin:0; font-size:var(--text-lg); display:flex; gap:.65rem; align-items:center; }
+    .section-head p { margin:.25rem 0 0; color:var(--color-text-muted); font-size:var(--text-sm); }
+    .count { white-space:nowrap; padding:.45rem .75rem; border-radius:var(--radius-full); font-size:var(--text-xs); font-weight:800; background:var(--color-surface-2); border:1px solid var(--color-border); }
+    .list { display:grid; gap:.8rem; }
+    .item { display:grid; grid-template-columns:auto auto 1fr; gap:.75rem; align-items:center; background:var(--color-surface-2); border:1px solid var(--color-border); border-radius:1rem; padding:.85rem .95rem; }
+    .item input[type="checkbox"] { width:15px; height:15px; accent-color:var(--color-primary); cursor:pointer; }
+    .icon { width:30px; height:30px; display:grid; place-items:center; border-radius:10px; font-size:14px; background:var(--color-primary-soft); border:1px solid var(--color-border); }
+    .item.done label { text-decoration: line-through; color: var(--color-text-muted); }
+    .status { position:fixed; right:18px; bottom:18px; background:var(--color-text); color:white; padding:.85rem 1rem; border-radius:1rem; font-size:var(--text-sm); font-weight:700; opacity:0; transform:translateY(18px); transition:.25s ease; z-index:30; }
+    .status.show { opacity:1; transform:translateY(0); }
+    .small { font-size: var(--text-sm); }
+    code { padding: .15rem .45rem; border-radius: .5rem; background: var(--color-surface-2); border: 1px solid var(--color-border); }
+    @media (max-width: 980px) { .hero, .sections, .config-grid { grid-template-columns:1fr; } }
+    @media (max-width: 640px) { .app { width:min(100% - 18px,1240px);} .hero-main, .hero-side, .section { padding: var(--space-5);} .mini-grid { grid-template-columns:1fr;} .actions { display:grid; grid-template-columns:1fr 1fr;} .actions .btn-primary { grid-column:span 2; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <section class="hero">
+      <div class="panel hero-main">
+        <div class="pill">☁️ Version synchronisée Firebase</div>
+        <h1>Checklist partagée<br>entre tous vos appareils.</h1>
+        <p class="lead">Cette version est prête pour Firebase Realtime Database. Une fois vos clés Firebase collées, vos cases, catégories et modifications seront synchronisées entre téléphone, ordinateur et tablette presque en temps réel.</p>
+        <div class="actions">
+          <button class="btn-primary" id="saveConfigBtn">Enregistrer la config Firebase</button>
+          <button class="btn-secondary" id="resetBtn">Réinitialiser les cases</button>
+          <button class="btn-secondary" id="themeToggle">☾</button>
+        </div>
+
+        <div class="config-grid">
+          <div class="field"><label>API Key</label><input id="apiKey" placeholder="AIza..." /></div>
+          <div class="field"><label>Auth Domain</label><input id="authDomain" placeholder="votre-projet.firebaseapp.com" /></div>
+          <div class="field"><label>Database URL</label><input id="databaseURL" placeholder="https://votre-projet-default-rtdb.firebaseio.com" /></div>
+          <div class="field"><label>Project ID</label><input id="projectId" placeholder="votre-projet-id" /></div>
+          <div class="field"><label>App ID</label><input id="appId" placeholder="1:123456:web:abcdef" /></div>
+          <div class="field"><label>Chemin checklist</label><input id="checklistPath" placeholder="checklists/voyage-philippines" value="checklists/voyage-philippines" /></div>
+        </div>
+
+        <div class="field" style="margin-top:1rem;">
+          <label>Instructions rapides</label>
+          <textarea readonly>1. Créez un projet Firebase.
+2. Activez Realtime Database.
+3. Collez ici les clés Web App + databaseURL.
+4. Cliquez sur “Enregistrer la config Firebase”.
+5. Hébergez ce fichier sur GitHub Pages / Netlify.
+6. Ouvrez la même URL sur tous vos appareils.</textarea>
+        </div>
+      </div>
+
+      <aside class="panel hero-side">
+        <div class="progress-card">
+          <div style="display:flex;justify-content:space-between;gap:1rem;align-items:end;">
+            <div>
+              <div class="small muted">Progression totale</div>
+              <div id="percent" style="font-size:var(--text-xl);font-weight:800;">0%</div>
+            </div>
+            <div class="small muted"><span id="done">0</span>/<span id="total">0</span></div>
+          </div>
+          <div class="bar"><span id="bar"></span></div>
+        </div>
+        <div class="mini-grid">
+          <div class="mini-card"><div class="k">Catégories</div><div class="v" id="sectionsCount">0</div></div>
+          <div class="mini-card"><div class="k">Restants</div><div class="v" id="remaining">0</div></div>
+        </div>
+        <div class="mini-card">
+          <div class="k">État sync</div>
+          <div class="v" id="syncState">Non connecté</div>
+          <p class="small muted" style="margin: .6rem 0 0;">Quand Firebase est configuré, cette checklist écoute les changements et met à jour l’écran automatiquement. [web:329][web:338]</p>
+        </div>
+      </aside>
+    </section>
+
+    <main class="sections" id="sections"></main>
+  </div>
+
+  <div id="status" class="status">Synchronisé</div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+    import { getDatabase, ref, set, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+    const CONFIG_KEY = 'firebase-checklist-config-v1';
+
+    const defaultData = [
+      { title:'Réservation & hôtel', subtitle:'Points à vérifier avant de confirmer', icon:'🏨', tone:'teal', items:['Hôtel avec coffre-fort','Hôtel avec endroit adapté au télétravail','Vérifier Wi-Fi correct pour travail / VPN'] },
+      { title:'Maison avant départ', subtitle:'Fermer et sécuriser avant de partir', icon:'🏠', tone:'coral', items:['Vider cafetière','Vider poubelle','Lancer / vider le lave-vaisselle','Couper l’eau','Débrancher prise cafetière','Débrancher prise télé'] },
+      { title:'Pharmacie tropicale', subtitle:'Spécial Philippines, bateau, chaleur, moustiques', icon:'💊', tone:'gold', items:['Paracétamol 500 mg (20 comprimés)','Imodium / Lopéramide 2 mg (10 comprimés)','Antinauséeux Nausicalm','Antihistaminique type Zyrtec','Sachets de réhydratation orale (ORS)','Probiotiques','Spasfon','Crème / spray anti-moustiques','Crème solaire IP50+','Pansements pour coupures / plaies','Traitement constipation / diarrhée','Doliprane'] },
+      { title:'Tech & télétravail', subtitle:'Connexion et travail', icon:'💻', tone:'lavender', items:['Routeur VPN','Chargeur du routeur VPN','Power bank','Prise universelle','Rallonge','Chargeur PC','Chargeur téléphone','Longs câbles','Casque / écouteurs'] },
+      { title:'Accessoires utiles', subtitle:'Confort voyage, route, plage', icon:'🎒', tone:'teal', items:['Coussin / oreiller pour vol long','Thermos / gourde','Sac de plage Decathlon','Petit sac Decathlon','Support voiture Mezyna'] },
+      { title:'Documents & argent', subtitle:'Toujours sécurisés', icon:'🛂', tone:'coral', items:['Passeport','Permis de conduire','Cartes bancaires'] },
+      { title:'Tenue avion / froid', subtitle:'Avion, climatisation, hiver', icon:'🧥', tone:'lavender', items:['Pantalon de survêtement pour avion','Veste de survêtement','Un t-shirt ou polo','Doudoune','Tagiya + écharpe + sous-pantalon si hiver'] },
+      { title:'Vêtements & chaussures', subtitle:'Marche, plage, soleil', icon:'👕', tone:'gold', items:['Chaussettes','Caleçons','Espadrilles confortables pour longues marches','Lunettes de soleil','Casquette','Lunettes pour eau ou masque','Claquettes','Chaussures de plongée pour plage'] },
+      { title:'Toilette & hygiène', subtitle:'Salle de bain et entretien perso', icon:'🧴', tone:'teal', items:['Crème solaire','Dentifrice','Brosse à dents','Chargeur brosse à dents','Brossette interdentaire','Coupe-ongles','Tondeuse','Kleenex','Pince à épiler','Déodorant / parfum'] }
+    ].map(section => ({ ...section, items: section.items.map(label => ({ label, checked:false })) }));
+
+    let data = structuredClone(defaultData);
+    let db = null;
+    let dbRef = null;
+    let isRemoteLoaded = false;
+
+    const els = {
+      sections: document.getElementById('sections'),
+      percent: document.getElementById('percent'),
+      done: document.getElementById('done'),
+      total: document.getElementById('total'),
+      remaining: document.getElementById('remaining'),
+      sectionsCount: document.getElementById('sectionsCount'),
+      bar: document.getElementById('bar'),
+      status: document.getElementById('status'),
+      syncState: document.getElementById('syncState')
+    };
+
+    function flash(message) {
+      els.status.textContent = message;
+      els.status.classList.add('show');
+      clearTimeout(window.__statusTimer);
+      window.__statusTimer = setTimeout(() => els.status.classList.remove('show'), 1900);
+    }
+
+    function getConfig() {
+      return {
+        apiKey: document.getElementById('apiKey').value.trim(),
+        authDomain: document.getElementById('authDomain').value.trim(),
+        databaseURL: document.getElementById('databaseURL').value.trim(),
+        projectId: document.getElementById('projectId').value.trim(),
+        appId: document.getElementById('appId').value.trim(),
+        checklistPath: document.getElementById('checklistPath').value.trim() || 'checklists/voyage-philippines'
+      };
+    }
+
+    function fillConfigForm(config) {
+      if (!config) return;
+      document.getElementById('apiKey').value = config.apiKey || '';
+      document.getElementById('authDomain').value = config.authDomain || '';
+      document.getElementById('databaseURL').value = config.databaseURL || '';
+      document.getElementById('projectId').value = config.projectId || '';
+      document.getElementById('appId').value = config.appId || '';
+      document.getElementById('checklistPath').value = config.checklistPath || 'checklists/voyage-philippines';
+    }
+
+    function saveConfigLocal() {
+      const cfg = getConfig();
+      localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+      flash('Config Firebase enregistrée');
+      return cfg;
+    }
+
+    function updateStats() {
+      const total = data.reduce((acc, s) => acc + s.items.length, 0);
+      const done = data.reduce((acc, s) => acc + s.items.filter(i => i.checked).length, 0);
+      const percent = total ? Math.round(done * 100 / total) : 0;
+      els.total.textContent = total;
+      els.done.textContent = done;
+      els.percent.textContent = percent + '%';
+      els.remaining.textContent = Math.max(total - done, 0);
+      els.sectionsCount.textContent = data.length;
+      els.bar.style.width = percent + '%';
+    }
+
+    function render() {
+      els.sections.innerHTML = '';
+      data.forEach((section, sIdx) => {
+        const doneCount = section.items.filter(i => i.checked).length;
+        const card = document.createElement('section');
+        card.className = 'panel section';
+        card.dataset.tone = section.tone;
+        card.innerHTML = `
+          <div class="section-head">
+            <div>
+              <h2><span>${section.icon}</span><span>${section.title}</span></h2>
+              <p>${section.subtitle}</p>
+            </div>
+            <div class="count">${doneCount}/${section.items.length}</div>
+          </div>
+          <div class="list"></div>
+        `;
+        const list = card.querySelector('.list');
+        section.items.forEach((item, iIdx) => {
+          const row = document.createElement('div');
+          row.className = 'item' + (item.checked ? ' done' : '');
+          const id = `s${sIdx}i${iIdx}`;
+          row.innerHTML = `
+            <input id="${id}" type="checkbox" ${item.checked ? 'checked' : ''}>
+            <div class="icon">${section.icon}</div>
+            <label for="${id}">${item.label}</label>
+          `;
+          row.querySelector('input').addEventListener('change', async (e) => {
+            item.checked = e.target.checked;
+            render();
+            await pushData();
+          });
+          list.appendChild(row);
+        });
+        els.sections.appendChild(card);
+      });
+      updateStats();
+    }
+
+    async function pushData() {
+      if (!dbRef) {
+        flash('Config Firebase manquante');
+        return;
+      }
+      await set(dbRef, { updatedAt: Date.now(), sections: data });
+      flash('Synchronisé avec Firebase');
+    }
+
+    async function connectFirebase() {
+      const cfg = saveConfigLocal();
+      if (!cfg.apiKey || !cfg.authDomain || !cfg.databaseURL || !cfg.projectId || !cfg.appId) {
+        alert('Veuillez remplir les champs Firebase essentiels.');
+        return;
+      }
+      try {
+        const app = initializeApp({
+          apiKey: cfg.apiKey,
+          authDomain: cfg.authDomain,
+          databaseURL: cfg.databaseURL,
+          projectId: cfg.projectId,
+          appId: cfg.appId
+        }, 'checklistApp-' + Math.random().toString(36).slice(2));
+        db = getDatabase(app);
+        dbRef = ref(db, cfg.checklistPath);
+        els.syncState.textContent = 'Connecté';
+        onValue(dbRef, async (snapshot) => {
+          const remote = snapshot.val();
+          if (remote && remote.sections) {
+            data = remote.sections;
+            isRemoteLoaded = true;
+            render();
+            flash('Données synchronisées');
+          } else if (!isRemoteLoaded) {
+            await set(dbRef, { updatedAt: Date.now(), sections: data });
+            isRemoteLoaded = true;
+            flash('Base initialisée');
+          }
+        });
+      } catch (e) {
+        console.error(e);
+        els.syncState.textContent = 'Erreur connexion';
+        alert('Erreur Firebase : ' + e.message);
+      }
+    }
+
+    document.getElementById('saveConfigBtn').addEventListener('click', connectFirebase);
+    document.getElementById('resetBtn').addEventListener('click', async () => {
+      data.forEach(section => section.items.forEach(item => item.checked = false));
+      render();
+      if (dbRef) await pushData();
+    });
+
+    const root = document.documentElement;
+    let isDark = false;
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      isDark = !isDark;
+      root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+      document.getElementById('themeToggle').textContent = isDark ? '☀' : '☾';
+    });
+
+    const savedConfig = JSON.parse(localStorage.getItem(CONFIG_KEY) || 'null');
+    fillConfigForm(savedConfig);
+    render();
+    if (savedConfig && savedConfig.apiKey && savedConfig.databaseURL) {
+      connectFirebase();
+    }
+  </script>
+</body>
+</html>
